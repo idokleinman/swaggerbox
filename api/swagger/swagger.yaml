@@ -1,0 +1,203 @@
+swagger: '2.0'
+info:
+  version: '0.1'
+  title: 'Mobile Particle Box Mock API'
+  description: |
+    #### Mobile candidates Particle Box mock API
+    ### Task
+    Build a swift iOS app that...
+
+host: localhost:10010
+basePath: /
+definitions:
+  BoxDocument:
+    type: object
+    required:
+      - key
+      - value
+    properties:
+      key:
+        type: string
+        example: temperature
+      value:
+        type: string
+        example: 25
+      scope:
+        type: string
+        enum: 
+          - device
+          - user
+          - product
+      device_id:
+        type: string
+        example: '250000000000000000000001'
+      product_id:
+        type: integer
+        example: 1234
+      updated_at:
+        type: string
+        format: date-time
+        example: '2016-08-29T09:12:33.001Z'
+
+parameters:
+  scope:
+    in: query
+    name: scope
+    description: scope where to look for documents
+    type: string
+    enum: 
+      - device
+      - user
+      - product
+  device_id:
+    in: query
+    name: device_id
+    description: the device ID used for scope lookups
+    type: string
+  product_id:
+    in: query
+    name: product_id
+    description: the product ID used for scope lookups
+    type: integer
+
+paths:
+  /box:
+    x-swagger-router-controller: box
+    get:
+      summary: list box documents
+      operationId: listBox
+      description: |
+        List documents from the box for a certain scope and on
+        behalf of a certain entity
+      parameters:
+        - $ref: '#/parameters/scope'
+        - $ref: '#/parameters/device_id'
+        - $ref: '#/parameters/product_id'
+        - in: query
+          name: filter
+          description: an optional string to filter document keys
+          type: string
+        - in: query
+          name: page
+          description: page number for pagination
+          type: integer
+          format: int32
+          minimum: 0
+        - in: query
+          name: per_page
+          description: maximum number of documents to return per page
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          default: 10
+      responses:
+        '200':
+          description: list documents matching criteria
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  page: 
+                    type: integer
+                    minimum: 0
+                  total:
+                    type: integer
+                  per_page:
+                    type: integer
+                    default: 10
+                    example: 10
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/BoxDocument'
+        '400':
+          description: bad input parameter
+    post:
+      summary: set box document value
+      operationId: setBox
+      description: |
+        Set the value for one box document by key for a certain scope and on
+        behalf of a certain entity
+      parameters:
+        - in: body
+          name: document
+          description: the document to set
+          schema:
+            $ref: '#/definitions/BoxDocument'
+      responses:
+        '200':
+          description: value set
+        '400':
+          description: invalid input, object invalid
+  /box/{key}:
+    x-swagger-router-controller: box
+    parameters:
+      - name: key
+        in: path
+        description: Box key name
+        type: string
+        required: true
+    get:
+      summary: return box document
+      operationId: getBox
+      description: |
+        Get one document from the box by key for a certain scope and on
+        behalf of a certain entity
+      parameters:
+        - $ref: '#/parameters/scope'
+        - $ref: '#/parameters/device_id'
+        - $ref: '#/parameters/product_id'
+      responses:
+        '200':
+          description: get document matching criteria
+          schema:
+            $ref: '#/definitions/BoxDocument'
+        '404':
+          description: no document exists for these criteria
+        '400':
+          description: bad input parameter
+    delete:
+      summary: delete box document
+      operationId: delBox
+      description: |
+        Delete one box document by key for a certain scope and on
+        behalf of a certain entity
+      parameters:
+        - in: query
+          name: scope
+          description: at which scope to delete the document
+          type: string
+          enum: 
+            - device
+            - user
+            - product
+        - $ref: '#/parameters/device_id'
+        - $ref: '#/parameters/product_id'
+      responses:
+        '204':
+          description: document deleted
+        '404':
+          description: no document exists for these criteria
+        '400':
+          description: bad input parameter
+  /swagger:
+    x-swagger-pipe: swagger_raw
+
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+# To apply Bearer auth to the whole API:
+security:
+  - Bearer: []
+
+# Added by API Auto Mocking Plugin
+# host: virtserver.swaggerhub.com
+schemes:
+ - https
+# Added by API Auto Mocking Plugin
+# basePath: /particle-iot/box/0.1
