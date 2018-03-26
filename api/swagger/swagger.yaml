@@ -24,7 +24,7 @@ definitions:
         example: 25
       scope:
         type: string
-        enum: 
+        enum:
           - device
           - user
           - product
@@ -45,7 +45,7 @@ parameters:
     name: scope
     description: scope where to look for documents
     type: string
-    enum: 
+    enum:
       - device
       - user
       - product
@@ -100,7 +100,7 @@ paths:
               meta:
                 type: object
                 properties:
-                  page: 
+                  page:
                     type: integer
                     minimum: 0
                   total:
@@ -170,7 +170,7 @@ paths:
           name: scope
           description: at which scope to delete the document
           type: string
-          enum: 
+          enum:
             - device
             - user
             - product
@@ -192,8 +192,8 @@ securityDefinitions:
     name: Authorization
     in: header
 # To apply Bearer auth to the whole API:
-security:
-  - Bearer: []
+# security:
+#   - Bearer: []
 
 # Added by API Auto Mocking Plugin
 # host: virtserver.swaggerhub.com
