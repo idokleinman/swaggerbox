@@ -50,7 +50,18 @@ function setBox(req, res) {
 }
 
 function getBox(req, res) {
-  res.json('getBox');
+
+  var boxDoc =  {
+    key:	'test',
+    value : 'something',
+    scope: 'device',
+    device_id: '123',
+    product_id: 50,
+    updated_at: Date.now()
+  }
+
+  res.json(boxDoc)
+  // res.json('getBox');
 
 }
 
