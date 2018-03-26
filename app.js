@@ -8,6 +8,14 @@ var config = {
   appRoot: __dirname // required config
 };
 
+config.swaggerSecurityHandlers = {
+  oauth2: function securityHandler1(req, authOrSecDef, scopesOrApiKey, cb) {
+    // your security code
+    cb();
+  }
+};
+
+
 SwaggerExpress.create(config, function(err, swaggerExpress) {
   if (err) { throw err; }
 
