@@ -116,11 +116,8 @@ function listBox(req, res) {
 }
 
 
-function setBox(req, res) {
-  res.json('setBox');
-}
-
 function getBox(req, res) {
+	console.log(req.url);
 
 	var scope = (req.query.scope ? req.query.scope : null);
 	var device_id = (req.query.device_id ? req.query.device_id : null);
@@ -187,6 +184,148 @@ function getBox(req, res) {
 
 }
 
+
+function _findBoxByCriteria(criteria) {
+	let criteria_count = 1;
+	var scope = (criteria.scope ? criteria.scope : null);
+	var device_id = (criteria.device_id ? criteria.device_id : null);
+	var product_id = (criteria.product_id ? criteria.product_id : null);
+	var boxKey = criteria.key;
+
+	if (scope) {
+		criteria_count++;
+	}
+
+	if (device_id) {
+		criteria_count++;
+	}
+
+	if (product_id) {
+		criteria_count++;
+	}
+
+	let i = 0;
+	let index = -1;
+
+	console.log('needed criteria '+criteria_count);
+	data.dataArr.forEach(doc => {
+
+		let matchItems = 0;
+
+		if (doc.key == boxKey) {
+			// console.log(boxKey);
+			// console.log('key not found '+i);
+			matchItems++;
+		}
+
+		if (scope && (scopeArr.includes(scope))) {
+			if (doc.scope == scope) {
+				matchItems++;
+			}
+		}
+
+		if (device_id) {
+			if (doc.device_id == device_id) {
+				matchItems++;
+
+			}
+		}
+
+		if (product_id && _.isNumber(parseInt(product_id))) {
+			if (doc.product_id == product_id) {
+				matchItems++;
+			}
+		}
+
+		console.log('doc '+i+' matchItems: '+matchItems+' criteria_count: '+criteria_count);
+		if (matchItems == criteria_count) {
+			if (index == -1) {
+				index = i;
+			}
+		}
+
+		i++;
+	});
+
+	return index;
+}
+
 function delBox(req, res) {
-  res.json('delBox');
+
+	let criteria = {};
+	criteria.scope = (req.query.scope ? req.query.scope : null);
+	criteria.device_id = (req.query.device_id ? req.query.device_id : null);
+	criteria.product_id = (req.query.product_id ? req.query.product_id : null);
+	criteria.key = req.url.substr(req.url.lastIndexOf('/') + 1);
+
+	let index = _findBoxByCriteria(criteria);
+	console.log(index);
+
+	if (index >= 0) {
+		delete data.dataArr[index];
+		res.status(204).send();
+	} else {
+		res.status(404).send();
+	}
+}
+
+
+function setBox(req, res) {
+
+
+	console.log(req.body);
+	let criteria = {};
+
+
+	criteria.scope = (req.body.scope ? req.body.scope : null);
+	criteria.device_id = (req.body.device_id ? req.body.device_id : null);
+	criteria.product_id = (req.body.product_id ? parseInt(req.body.product_id) : null);
+	criteria.key = (req.body.key ? req.body.key : null);
+	let value = (req.body.value ? req.body.value : null);
+
+	if (!criteria.key) {
+		console.log('missing key');
+		res.response(400).send(); // must specify key
+	}
+
+	if ((!criteria.scope) || (!scopeArr.includes(criteria.scope))) {
+		console.log('bad scope');
+		res.response(400).send(); // must specify scope
+	}
+
+	if (!criteria.device_id) {
+		console.log('missing device_id');
+		res.response(400).send(); // must specify device_id
+	}
+
+	if (!criteria.product_id) {
+		console.log('missing product_id');
+		res.response(400).send(); // must specify product_id
+	}
+
+	if (!value) {
+		console.log('missing value');
+		res.response(400).send(); // must specify value
+	}
+
+	let d = new Date;
+	let newDoc = {
+		key : criteria.key,
+		value: criteria.value,
+		scope: criteria.scope,
+		device_id: criteria.device_id,
+		product_id: criteria.product_id,
+		updated_at: d.toISOString()
+	}
+
+	let index = _findBoxByCriteria(criteria);
+	console.log(index);
+
+	if (index >= 0) {
+		data.dataArr[index] = newDoc;
+		res.status(200).send();//'document updated');
+	} else {
+		data.dataArr.push(newDoc);
+		res.status(200).send();//'document created');
+	}
 }
