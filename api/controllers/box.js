@@ -12,6 +12,7 @@
  */
 var util = require('util');
 var data = require('../helpers/data');
+var _ = require('lodash');
 
 /*
  Once you 'require' a module you can reference the things that it exports.  These are defined in module.exports.
@@ -36,7 +37,12 @@ module.exports = {
   Param 2: a handle to the response object
  */
 
+let scopeArr = ['device','user','product'];
+let default_page = 1;
+let default_per_page = 10;
+
 function listBox(req, res) {
+
 	var scope = (req.query.scope ? req.query.scope : null);
 	var device_id = (req.query.device_id ? req.query.device_id : null);
 	var product_id = (req.query.product_id ? req.query.product_id : null);
@@ -44,38 +50,69 @@ function listBox(req, res) {
 	var page = (req.query.page ? req.query.page : 1);
 	var per_page = (req.query.per_page ? req.query.per_page : 10);
 
+	let boxDocuments = data.dataArr;
 
-	var boxDocuments = data.dataArr;
+
+	console.log(req.query);
+
 	if (scope) {
-		boxDocuments = boxDocuments.filter(doc => doc.scope === scope);
-    }
+		if (!scopeArr.includes(scope)) {
+			res.status(400).send();//'bad input parameter');
+			return;
+		}
+		boxDocuments = boxDocuments.filter(doc => doc.scope == scope);
+	}
 
 	if (device_id) {
-		boxDocuments = boxDocuments.filter(doc => doc.device_id === device_id);
+		boxDocuments = boxDocuments.filter(doc => doc.device_id == device_id);
 	}
 
 	if (filter) {
-		boxDocuments = boxDocuments.filter(doc => doc.key.contains(filter));
+		boxDocuments = boxDocuments.filter(doc => {
+			return doc.key.includes(filter)
+		});
 	}
 
+	if (!_.isNumber(parseInt(product_id))) {
+		res.status(400).send();//'bad input parameter');
+		return;
+	}
 
 	if (product_id) {
-		boxDocuments = boxDocuments.filter(doc => doc.product_id === product_id);
+		boxDocuments = boxDocuments.filter(doc => doc.product_id == product_id);
 	}
 
 
+	if (page !== default_page) {
+		if (!_.isNumber(page)) {
+			res.status(400).send();//'bad input parameter');
+			return;
+		}
 
-    boxDocuments = boxDocuments.slice((page-1)*per_page, (page*per_page)-1);
-	var total = boxDocuments.length;
+		page = parseInt(page);
+	}
 
-	var meta = {
+	if (per_page !== default_per_page) {
+		if (!_.isNumber(parseInt(per_page))) {
+			res.status(400).send();//'bad input parameter');
+			return;
+		}
+
+		per_page = parseInt(per_page);
+	}
+
+	let total = boxDocuments.length;
+	boxDocuments = boxDocuments.slice((page-1)*per_page, (page*per_page));
+
+	let meta = {
 		page,
 		total,
 		per_page
 	};
 
+	let response = {meta : meta, data: boxDocuments};
 
-    res.status(200).json({meta, data: boxDocuments});
+    res.status(200).json(response);
 }
 
 
@@ -85,19 +122,68 @@ function setBox(req, res) {
 
 function getBox(req, res) {
 
+	var scope = (req.query.scope ? req.query.scope : null);
+	var device_id = (req.query.device_id ? req.query.device_id : null);
+	var product_id = (req.query.product_id ? req.query.product_id : null);
 
 	// get the path
 	var boxKey = req.url.substr(req.url.lastIndexOf('/') + 1);
+	// console.log(boxKey);
 
+	let match = false;
+
+	let i = 0;
 	data.dataArr.forEach(doc => {
-		if (doc.key === boxKey) { //todo: extend checks
-			res.json(doc);
-			return;
+
+		if (match) {
+			return; // short circuit if first match was found
 		}
+
+		console.log(doc.key+' ['+i+']');
+		if (doc.key == boxKey) {
+			// console.log(boxKey);
+			// console.log('key not found '+i);
+			match = true;
+		}
+
+		if (scope && (scopeArr.includes(scope))) {
+			if (doc.scope == scope) {
+				console.log('scope  found');
+				match = true;
+			}
+		}
+
+		if (device_id) {
+			if (doc.device_id == device_id) {
+				console.log('device_id  found');
+				match = true;
+
+			}
+		}
+
+		if (product_id && _.isNumber(parseInt(product_id))) {
+			if (doc.product_id == product_id) {
+				console.log('prodyct_id  found');
+				match = true;
+			}
+		}
+
+		if (match) {
+			console.log('match!!!');
+			console.log(doc);
+			res.status(200).json(doc);
+		}
+
+		i++;
 	});
 
-	console.log('not found');
-	res.status(404).send('no document exists for these criteria');
+	if (!match) {
+		console.log('not found');
+		res.status(404).send();//\.send('no document exists for these criteria');
+		return;
+
+		// todo: why the f does this fail validation?
+	}
 
 }
 
