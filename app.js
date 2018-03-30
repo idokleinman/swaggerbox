@@ -2,6 +2,8 @@
 
 var SwaggerExpress = require('swagger-express-mw');
 var app = require('express')();
+var data = require('./api/helpers/data');
+
 module.exports = app; // for testing
 
 var config = {
@@ -18,6 +20,8 @@ config.swaggerSecurityHandlers = {
 
 SwaggerExpress.create(config, function(err, swaggerExpress) {
   if (err) { throw err; }
+
+  data.generateData(25);
 
   // install middleware
   swaggerExpress.register(app);
