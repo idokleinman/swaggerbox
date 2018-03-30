@@ -11,6 +11,7 @@
   It is a good idea to list the modules that your application depends on in the package.json in the project root
  */
 var util = require('util');
+var data = require('../helpers/data');
 
 /*
  Once you 'require' a module you can reference the things that it exports.  These are defined in module.exports.
@@ -36,12 +37,45 @@ module.exports = {
  */
 
 function listBox(req, res) {
-  // variables defined in the Swagger document can be referenced using req.swagger.params.{parameter_name}
-  // var name = req.swagger.params.name.value || 'stranger';
-  // var hello = util.format('Hello, %s!', name);
+	var scope = (req.query.scope ? req.query.scope : null);
+	var device_id = (req.query.device_id ? req.query.device_id : null);
+	var product_id = (req.query.product_id ? req.query.product_id : null);
+	var filter = (req.query.filter ? req.query.filter : null);
+	var page = (req.query.page ? req.query.page : 1);
+	var per_page = (req.query.per_page ? req.query.per_page : 10);
 
-  // this sends back a JSON response which is a single string
-  res.json('listBox');
+
+	var boxDocuments = data.dataArr;
+	if (scope) {
+		boxDocuments = boxDocuments.filter(doc => doc.scope === scope);
+    }
+
+	if (device_id) {
+		boxDocuments = boxDocuments.filter(doc => doc.device_id === device_id);
+	}
+
+	if (filter) {
+		boxDocuments = boxDocuments.filter(doc => doc.key.contains(filter));
+	}
+
+
+	if (product_id) {
+		boxDocuments = boxDocuments.filter(doc => doc.product_id === product_id);
+	}
+
+
+
+    boxDocuments = boxDocuments.slice((page-1)*per_page, (page*per_page)-1);
+	var total = boxDocuments.length;
+
+	var meta = {
+		page,
+		total,
+		per_page
+	};
+
+
+    res.status(200).json({meta, data: boxDocuments});
 }
 
 
@@ -51,17 +85,19 @@ function setBox(req, res) {
 
 function getBox(req, res) {
 
-  var boxDoc =  {
-    key:	'test',
-    value : 'something',
-    scope: 'device',
-    device_id: '123',
-    product_id: 50,
-    updated_at: Date.now()
-  }
 
-  res.json(boxDoc)
-  // res.json('getBox');
+	// get the path
+	var boxKey = req.url.substr(req.url.lastIndexOf('/') + 1);
+
+	data.dataArr.forEach(doc => {
+		if (doc.key === boxKey) { //todo: extend checks
+			res.json(doc);
+			return;
+		}
+	});
+
+	console.log('not found');
+	res.status(404).send('no document exists for these criteria');
 
 }
 
