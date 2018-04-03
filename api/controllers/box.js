@@ -13,6 +13,8 @@
 var util = require('util');
 var data = require('../helpers/data');
 var _ = require('lodash');
+var boxDb = require('../models/box');
+var DatabaseController = require('./DatabaseController');
 
 /*
  Once you 'require' a module you can reference the things that it exports.  These are defined in module.exports.
@@ -40,47 +42,44 @@ module.exports = {
 let scopeArr = ['device','user','product'];
 let default_page = 1;
 let default_per_page = 10;
+let dbController = new DatabaseController();
 
-function listBox(req, res) {
+async function listBox(req, res) {
 
-	var scope = (req.query.scope ? req.query.scope : null);
-	var device_id = (req.query.device_id ? req.query.device_id : null);
-	var product_id = (req.query.product_id ? req.query.product_id : null);
-	var filter = (req.query.filter ? req.query.filter : null);
-	var page = (req.query.page ? req.query.page : 1);
-	var per_page = (req.query.per_page ? req.query.per_page : 10);
+	let filterDoc = {};
 
-	let boxDocuments = data.dataArr;
-
-
-	console.log(req.query);
-
-	if (scope) {
+	if (req.query.scope ) {
 		if (!scopeArr.includes(scope)) {
 			res.status(400).send();//'bad input parameter');
 			return;
 		}
-		boxDocuments = boxDocuments.filter(doc => doc.scope == scope);
+
+		filterDoc.scope = req.query.scope;
 	}
 
-	if (device_id) {
-		boxDocuments = boxDocuments.filter(doc => doc.device_id == device_id);
+	if (req.query.product_id ) {
+		if (!_.isNumber(parseInt(product_id))) {
+			res.status(400).send();//'bad input parameter');
+			return;
+		}
+
+		filterDoc.product_id = parseInt(req.query.product_id);
 	}
 
-	if (filter) {
-		boxDocuments = boxDocuments.filter(doc => {
-			return doc.key.includes(filter)
-		});
+	if (req.query.device_id) {
+		filterDoc.device_id = req.query.device_id;
 	}
 
-	if (!_.isNumber(parseInt(product_id))) {
-		res.status(400).send();//'bad input parameter');
-		return;
+	if (req.query.filter) {
+		filterDoc.key = req.query.filter;
 	}
 
-	if (product_id) {
-		boxDocuments = boxDocuments.filter(doc => doc.product_id == product_id);
-	}
+	var page = (req.query.page ? req.query.page : 1);
+	var per_page = (req.query.per_page ? req.query.per_page : 10);
+
+	// let boxDocuments = data.dataArr;
+
+	console.log(req.query);
 
 
 	if (page !== default_page) {
@@ -101,6 +100,10 @@ function listBox(req, res) {
 		per_page = parseInt(per_page);
 	}
 
+
+	let boxDocuments = await dbController.listBox(filterDoc);
+
+
 	let total = boxDocuments.length;
 	boxDocuments = boxDocuments.slice((page-1)*per_page, (page*per_page));
 
@@ -116,72 +119,45 @@ function listBox(req, res) {
 }
 
 
-function getBox(req, res) {
-	console.log(req.url);
-
-	var scope = (req.query.scope ? req.query.scope : null);
-	var device_id = (req.query.device_id ? req.query.device_id : null);
-	var product_id = (req.query.product_id ? req.query.product_id : null);
+async function getBox(req, res) {
 
 	// get the path
-	var boxKey = req.url.substr(req.url.lastIndexOf('/') + 1);
+	let boxKey = req.url.substr(req.url.lastIndexOf('/') + 1);
 	// console.log(boxKey);
 
-	let match = false;
+	let filterDoc = {};
+	filterDoc.key = boxKey;
 
-	let i = 0;
-	data.dataArr.forEach(doc => {
-
-		if (match) {
-			return; // short circuit if first match was found
+	if (req.query.scope ) {
+		if (!scopeArr.includes(scope)) {
+			res.status(400).send();//'bad input parameter');
+			return;
 		}
 
-		console.log(doc.key+' ['+i+']');
-		if (doc.key == boxKey) {
-			// console.log(boxKey);
-			// console.log('key not found '+i);
-			match = true;
-		}
-
-		if (scope && (scopeArr.includes(scope))) {
-			if (doc.scope == scope) {
-				console.log('scope  found');
-				match = true;
-			}
-		}
-
-		if (device_id) {
-			if (doc.device_id == device_id) {
-				console.log('device_id  found');
-				match = true;
-
-			}
-		}
-
-		if (product_id && _.isNumber(parseInt(product_id))) {
-			if (doc.product_id == product_id) {
-				console.log('prodyct_id  found');
-				match = true;
-			}
-		}
-
-		if (match) {
-			console.log('match!!!');
-			console.log(doc);
-			res.status(200).json(doc);
-		}
-
-		i++;
-	});
-
-	if (!match) {
-		console.log('not found');
-		res.status(404).send();//\.send('no document exists for these criteria');
-		return;
-
-		// todo: why the f does this fail validation?
+		filterDoc.scope = req.query.scope;
 	}
 
+	if (req.query.product_id ) {
+		if (!_.isNumber(parseInt(product_id))) {
+			res.status(400).send();//'bad input parameter');
+			return;
+		}
+
+		filterDoc.product_id = parseInt(req.query.product_id);
+	}
+
+	if (req.query.device_id) {
+		filterDoc.device_id = req.query.device_id;
+	}
+
+	let boxDocuments = await dbController.listBox(filterDoc);
+	let total = boxDocuments.length;
+	let response = {};
+	if (total > 0) {
+		response = boxDocuments[0];
+	}
+
+	res.status(200).json(response);
 }
 
 
