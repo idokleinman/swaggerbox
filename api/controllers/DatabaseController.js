@@ -1,8 +1,8 @@
 'use strict';
 
-const settings = require('../settings');
+const settings = require('../../settings');
 const mongoose = require('mongoose');
-const Box = require('./models/box');
+const Box = require('../models/box');
 
 
 class DatabaseManager {
@@ -21,35 +21,13 @@ class DatabaseManager {
 		return box.save();
 	}
 
-	// async deletePositionById(id) {
-	// 	return Position.findOneAndRemove({_id : id}).exec();
-	// }
-	//
-	// async updatePositionByUuid(uuid, data) {
-	// 	return Position.update({uuid : uuid }, data).exec();
-	// }
-
 	async listBox(filterDoc) {
 		return Box.find(filterDoc).lean().exec();
 	}
 
-	// async getAllActivePostions() {
-	// 	return Position.find({$or:[{orderStatus: 'open'},{orderStatus:'partial'},{orderStatus:'fulfilled'}]}).exec();
-	// }
-
-	// async positionBySignalExists(signal) {
-	// 	return Position.findOne({
-	// 		signalRawTimeString : signal.time,
-	// 		signalPrice : signal.lastprice,
-	// 		coin : signal.market.split('-')[1]
-	// 	}).exec().then((doc) => {
-	// 		if (doc) {
-	// 			return Promise.resolve(true);
-	// 		} else {
-	// 			return Promise.resolve(false);
-	// 		}
-	// 	});
-	// }
+	async removeBox(filterDoc) {
+		return Box.remove(filterDoc).exec();
+	}
 
 
 	terminate() {
@@ -58,10 +36,6 @@ class DatabaseManager {
 			mongoose.connection.close();
 		}
 	}
-
-
-
-
 }
 
 module.exports = DatabaseManager;

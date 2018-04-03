@@ -128,7 +128,7 @@ paths:
           schema:
             $ref: '#/definitions/BoxDocument'
       responses:
-        '200':
+        '201':
           description: value set
         '400':
           description: invalid input, object invalid
@@ -183,6 +183,7 @@ paths:
           description: no document exists for these criteria
         '400':
           description: bad input parameter
+          
   /swagger:
     x-swagger-pipe: swagger_raw
 

@@ -1,5 +1,6 @@
+'use strict';
 
-
+var DatabaseController = require('../controllers/DatabaseController');
 
 // mock data
 var dataArr = [];
@@ -8,29 +9,37 @@ var scopes = ['device','user','product'];
 var product_ids = [50,60,70,80];
 var device_ids = ['70073798839ba79ca696a','70073798839ba79ca925bf','70073798839ba79ca6913c','70073798839ba79ca05fe','70073798839ba79ca2323','70073798839ba79ca090f','70073798839ba79caeefe','70073798839ba79ca03cd'];
 
+let dbController = new DatabaseController();
 
+async function generateMockData(dataLength) {
 
-function generateData(dataLength) {
+	let boxDocs = await dbController.listBox({});
+	if (boxDocs.length < dataLength) {
+		dataLength = boxDocs.length - dataLength;
+	} else {
+		dbController.terminate();
+		return (`- No need to create additional mock data`);
+	}
 
 	for (var i=0; i< dataLength; i++) {
 
 		var boxDoc =  {
-			key:	keys[Math.floor(Math.random()*keys.length)],
+			key: keys[Math.floor(Math.random()*keys.length)],
 			value : Math.floor(Math.random()*360).toString(),
 			scope: scopes[Math.floor(Math.random()*scopes.length)],
 			product_id: product_ids[Math.floor(Math.random()*product_ids.length)],
 			device_id: device_ids[Math.floor(Math.random()*device_ids.length)],
-			updated_at: '2017-10-05T14:48:00.000Z',//Date.now()
 		}
 
+		await dbController.addBox(boxDoc);
 
-		dataArr.push(boxDoc);
 	}
 
-	// console.log(dataArr);
+	dbController.terminate();
+	return (`- ${dataLength} mock box documents created`);
 
 }
 
 module.exports = {
-	dataArr, generateData
+	generateMockData
 };
