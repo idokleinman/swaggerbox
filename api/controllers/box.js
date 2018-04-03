@@ -10,10 +10,9 @@
 
   It is a good idea to list the modules that your application depends on in the package.json in the project root
  */
-var util = require('util');
-var data = require('../helpers/data');
-var _ = require('lodash');
-var boxDb = require('../models/box');
+// var util = require('util');
+// var _ = require('lodash');
+// var boxDb = require('../models/box');
 var DatabaseController = require('./DatabaseController');
 
 /*
@@ -28,9 +27,6 @@ var DatabaseController = require('./DatabaseController');
   In the starter/skeleton project the 'get' operation on the '/hello' path has an operationId named 'hello'.  Here,
   we specify that in the exports of this module that 'hello' maps to the function named 'hello'
  */
-module.exports = {
-  listBox, setBox, getBox, delBox
-};
 
 /*
   Functions in a127 controllers used for operations should take two parameters:
@@ -262,3 +258,8 @@ async function setBox(req, res) {
 
 	res.status(201).send(); // box created
 }
+
+
+module.exports = {
+	listBox, setBox, getBox, delBox
+};

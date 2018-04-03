@@ -3,7 +3,8 @@
 var SwaggerExpress = require('swagger-express-mw');
 var app = require('express')();
 var data = require('./api/helpers/data');
-var settings = require('./settings');
+// var settings = require('./settings');
+// var box = require('./api/controllers/box');
 
 module.exports = app; // for testing
 
